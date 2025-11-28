@@ -1,0 +1,47 @@
+CC = gcc
+CFLAGS = -Wall -Wextra -std=c11 -D_POSIX_C_SOURCE=200809L -O2
+LDFLAGS = -lrt -lpthread -lm
+
+MAIN_SRC = mango_main.c
+ANALYSIS_SRC = mango_analysis.c
+HEADER = mango_system.h
+
+MAIN_EXEC = mango_simulator
+ANALYSIS_EXEC = mango_analysis
+
+all: $(MAIN_EXEC) $(ANALYSIS_EXEC)
+
+$(MAIN_EXEC): $(MAIN_SRC) $(HEADER)
+	$(CC) $(CFLAGS) $(MAIN_SRC) -o $(MAIN_EXEC) $(LDFLAGS)
+	@echo "✓ Programa principal compilado: $(MAIN_EXEC)"
+
+$(ANALYSIS_EXEC): $(ANALYSIS_SRC) $(HEADER)
+	$(CC) $(CFLAGS) $(ANALYSIS_SRC) -o $(ANALYSIS_EXEC) $(LDFLAGS)
+	@echo "✓ Programa de análisis compilado: $(ANALYSIS_EXEC)"
+
+clean:
+	rm -f $(MAIN_EXEC) $(ANALYSIS_EXEC)
+	rm -f *.o *.csv
+	@echo "✓ Archivos limpiados"
+
+clean-ipc:
+	@echo "Limpiando recursos IPC..."
+	@rm -f /dev/shm/mango_* 2>/dev/null || true
+	@echo "✓ Recursos IPC limpiados"
+
+test: $(MAIN_EXEC)
+	@echo ""
+	@echo "=== PRUEBA RÁPIDA ==="
+	@echo "Configuración: 10 cm/s, caja 50cm, banda 200cm, 3 robots, 15 mangos"
+	@echo ""
+	./$(MAIN_EXEC) 10 50 200 3 15
+
+help:
+	@echo "Uso del Makefile:"
+	@echo "  make all       - Compilar todo"
+	@echo "  make clean     - Limpiar archivos"
+	@echo "  make clean-ipc - Limpiar recursos IPC"
+	@echo "  make test      - Ejecutar prueba"
+	@echo "  make help      - Mostrar ayuda"
+
+.PHONY: all clean clean-ipc test help
