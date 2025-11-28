@@ -242,6 +242,15 @@ int main(int argc, char *argv[]) {
             int num_mangos = (argc >= 3) ? atoi(argv[2]) : 20;
             int num_sims = (argc >= 4) ? atoi(argv[3]) : 5;
             
+            if (num_mangos <= 0 || num_mangos > MAX_MANGOS) {
+                printf("Error: Número de mangos debe estar entre 1 y %d\n", MAX_MANGOS);
+                return 1;
+            }
+            if (num_sims <= 0) {
+                printf("Error: Número de simulaciones debe ser positivo\n");
+                return 1;
+            }
+            
             config_base.num_mangos = num_mangos;
             encontrar_num_robots_optimo(&config_base, 0.95, num_sims);
             break;
@@ -254,6 +263,19 @@ int main(int argc, char *argv[]) {
             int incremento = (argc >= 5) ? atoi(argv[4]) : 5;
             int num_sims = (argc >= 6) ? atoi(argv[5]) : 3;
             
+            if (min_mangos <= 0 || max_mangos > MAX_MANGOS || min_mangos > max_mangos) {
+                printf("Error: Rango de mangos inválido (debe ser 1 <= min <= max <= %d)\n", MAX_MANGOS);
+                return 1;
+            }
+            if (incremento <= 0) {
+                printf("Error: Incremento debe ser positivo\n");
+                return 1;
+            }
+            if (num_sims <= 0) {
+                printf("Error: Número de simulaciones debe ser positivo\n");
+                return 1;
+            }
+            
             generar_curva_robots_mangos(&config_base, min_mangos, max_mangos, 
                                        incremento, num_sims, 0.95);
             break;
@@ -265,6 +287,23 @@ int main(int argc, char *argv[]) {
             int robots_base = (argc >= 4) ? atoi(argv[3]) : 5;
             float prob_fallo = (argc >= 5) ? atof(argv[4]) : 0.05;
             int num_sims = (argc >= 6) ? atoi(argv[5]) : 5;
+            
+            if (num_mangos <= 0 || num_mangos > MAX_MANGOS) {
+                printf("Error: Número de mangos debe estar entre 1 y %d\n", MAX_MANGOS);
+                return 1;
+            }
+            if (robots_base <= 0 || robots_base > MAX_ROBOTS) {
+                printf("Error: Número de robots debe estar entre 1 y %d\n", MAX_ROBOTS);
+                return 1;
+            }
+            if (prob_fallo < 0.0 || prob_fallo > 1.0) {
+                printf("Error: Probabilidad de fallo debe estar entre 0 y 1\n");
+                return 1;
+            }
+            if (num_sims <= 0) {
+                printf("Error: Número de simulaciones debe ser positivo\n");
+                return 1;
+            }
             
             config_base.num_mangos = num_mangos;
             config_base.num_robots = robots_base;
