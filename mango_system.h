@@ -75,5 +75,6 @@ float calcular_tiempo_etiquetado(Mango *mango, float tamano_caja);
 // Funciones de utilidad
 void imprimir_estado(EstadoSistema *estado);
 void cleanup_recursos();
+void signal_handler(int signo);
 
 #endif // MANGO_SYSTEM_H

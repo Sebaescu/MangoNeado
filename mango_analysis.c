@@ -140,6 +140,24 @@ void generar_curva_robots_mangos(ConfiguracionSistema *config_base,
     
     fclose(archivo);
     printf("\nResultados guardados en: curva_robots_mangos.csv\n");
+    
+    // Generar gráfica con gnuplot
+    printf("Generando gráfica...\n");
+    FILE *gnuplot = popen("gnuplot -persist", "w");
+    if (gnuplot != NULL) {
+        fprintf(gnuplot, "set terminal qt size 800,600\n");
+        fprintf(gnuplot, "set title 'Curva Robots vs Mangos'\n");
+        fprintf(gnuplot, "set xlabel 'Número de Mangos'\n");
+        fprintf(gnuplot, "set ylabel 'Robots Mínimos Necesarios'\n");
+        fprintf(gnuplot, "set grid\n");
+        fprintf(gnuplot, "set datafile separator ','\n");
+        fprintf(gnuplot, "set key left top\n");
+        fprintf(gnuplot, "plot 'curva_robots_mangos.csv' using 1:2 with linespoints linewidth 2 pointtype 7 pointsize 1.5 title 'Robots Óptimos'\n");
+        pclose(gnuplot);
+        printf("✓ Gráfica generada (requiere gnuplot instalado)\n");
+    } else {
+        printf("⚠ No se pudo generar gráfica. Instala gnuplot: sudo apt install gnuplot\n");
+    }
 }
 
 // Análisis con redundancia (probabilidad de fallo)
@@ -195,11 +213,11 @@ void analizar_con_redundancia(ConfiguracionSistema *config_base,
 int main(int argc, char *argv[]) {
     srand(time(NULL));
     
-    // Configuración base del sistema
+    // Configuración base del sistema (más generosa para análisis)
     ConfiguracionSistema config_base;
     config_base.velocidad_banda = 10.0;   // 10 cm/s
     config_base.tamano_caja = 50.0;       // 50 cm
-    config_base.longitud_banda = 200.0;   // 200 cm
+    config_base.longitud_banda = 300.0;   // 300 cm (más espacio para robots)
     config_base.prob_fallo = 0.0;
     config_base.usar_redundancia = 0;
     

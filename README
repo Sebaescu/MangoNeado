@@ -100,38 +100,63 @@ Si la compilación es exitosa, verás:
 
 ## ⚡ Uso Rápido
 
-### Prueba Simple
+### Comandos Básicos del Makefile
 
 ```bash
-make test
+make all             # Compilar todos los programas
+make test            # Prueba rápida del simulador
+make test-analysis   # Probar búsqueda de robots óptimos
+make test-curve      # Probar generación de curva
+make test-all        # Ejecutar todas las pruebas
+make clean           # Limpiar archivos compilados
+make clean-ipc       # Limpiar recursos IPC del sistema
+make help            # Ver ayuda completa
 ```
-
-Esto ejecuta una simulación con parámetros por defecto.
 
 ### Simulación Manual
 
 ```bash
-./mango_simulator <velocidad> <tamaño_caja> <longitud_banda> <robots> <mangos>
+./mango_simulator <velocidad> <tamaño_caja> <longitud_banda> <robots> <mangos> [prob_fallo] [usar_redundancia]
 ```
 
-**Ejemplo**:
+**Parámetros:**
+- **velocidad**: Velocidad de la banda transportadora (cm/s)
+- **tamaño_caja**: Tamaño de la caja (cm × cm)
+- **longitud_banda**: Longitud total de la banda (cm)
+- **robots**: Número de robots a utilizar
+- **mangos**: Número de mangos en la caja
+- **prob_fallo** (opcional): Probabilidad de fallo de robots (0.0-1.0)
+- **usar_redundancia** (opcional): 1 para activar redundancia, 0 para desactivar
+
+**Ejemplo básico**:
 ```bash
-./mango_simulator 10 50 200 5 20
+./mango_simulator 10 50 200 4 6
 ```
-- Velocidad de banda: 10 cm/s
-- Tamaño de caja: 50 cm × 50 cm
-- Longitud de banda: 200 cm
-- Número de robots: 5
-- Número de mangos: 20
+
+**Ejemplo con redundancia**:
+```bash
+./mango_simulator 10 50 200 5 20 0.05 1
+```
 
 ### Análisis de Optimización
 
 ```bash
-# Generar curva robots vs mangos
-./mango_analysis 2 10 40 5 3
+# Modo 1: Encontrar número óptimo de robots
+./mango_analysis 1 <num_mangos> <num_simulaciones>
+
+# Modo 2: Generar curva robots vs mangos
+./mango_analysis 2 <min_mangos> <max_mangos> <incremento> <num_simulaciones>
+
+# Modo 3: Análisis con redundancia
+./mango_analysis 3 <num_mangos> <robots_base> <prob_fallo> <num_simulaciones>
 ```
 
-Esto genera `curva_robots_mangos.csv` con los resultados.
+**Ejemplos**:
+```bash
+./mango_analysis 1 20 5        # Encontrar robots para 20 mangos
+./mango_analysis 2 10 40 5 3   # Curva de 10-40 mangos
+./mango_analysis 3 25 5 0.1 5  # Redundancia con 10% fallo
+```
 
 ---
 
@@ -140,22 +165,24 @@ Esto genera `curva_robots_mangos.csv` con los resultados.
 ### Ejemplo 1: Configuración Básica
 
 ```bash
-./mango_simulator 10 50 200 3 15
+./mango_simulator 10 50 200 4 6
 ```
 
 **Salida esperada**:
 ```
 === INICIANDO SIMULACIÓN ===
-Mangos: 15 | Robots: 3 | Velocidad: 10.00 cm/s | Caja: 50.00 cm
+Mangos: 6 | Robots: 4 | Velocidad: 10.00 cm/s | Caja: 50.00 cm
 
-[Robot 0] Iniciado en posición 33.33 cm
-[Robot 1] Iniciado en posición 100.00 cm
-[Robot 2] Iniciado en posición 166.67 cm
-[Robot 0] Etiquetó mango 3 en (5.23, -8.41) - Tiempo: 0.382s
-[Robot 0] Etiquetó mango 7 en (-3.12, 6.78) - Tiempo: 0.297s
+[Robot 0] Iniciado en posición 25.00 cm (zona: 0.00 - 50.00)
+[Robot 1] Iniciado en posición 75.00 cm (zona: 50.00 - 100.00)
+[Robot 2] Iniciado en posición 125.00 cm (zona: 100.00 - 150.00)
+[Robot 3] Iniciado en posición 175.00 cm (zona: 150.00 - 200.00)
+[Robot 0] Etiquetó mango 0 en (2.66, 3.20) - Tiempo: 1.664s
+[Robot 0] Etiquetó mango 1 en (-2.24, 6.34) - Tiempo: 2.691s
+[Robot 1] Etiquetó mango 2 en (-0.61, -2.21) - Tiempo: 0.917s
 ...
 === SIMULACIÓN COMPLETADA ===
-Mangos etiquetados: 15 / 15
+Mangos etiquetados: 6 / 6
 
 ✓ ÉXITO: Todos los mangos fueron etiquetados
 ```
@@ -163,94 +190,123 @@ Mangos etiquetados: 15 / 15
 ### Ejemplo 2: Análisis - Encontrar Robots Óptimos
 
 ```bash
-./mango_analysis 1 25 5
+./mango_analysis 1 6 2
 ```
 
-Esto ejecuta 5 simulaciones para encontrar el número mínimo de robots necesarios para 25 mangos con 95% de tasa de éxito.
+Ejecuta 2 simulaciones para encontrar el número mínimo de robots necesarios para 6 mangos con 95% de tasa de éxito.
 
 **Salida**:
 ```
 === BUSCANDO NÚMERO ÓPTIMO DE ROBOTS ===
 Objetivo: 95% tasa de éxito
-Mangos: 25
+Mangos: 6
 
-Analizando: 4 robots, 25 mangos
-  [1/5] ✓ Éxito (0.85s)
-  [2/5] ✗ Fallo: 23/25 etiquetados (0.82s)
-  [3/5] ✓ Éxito (0.87s)
-  ...
-Resultado: 4 robots → 60% éxito
+Analizando: 1 robots, 6 mangos
+  [1/2] ✗ Fallo: 1/6 etiquetados (0.03s)
+  [2/2] ✗ Fallo: 2/6 etiquetados (0.03s)
+Resultado: 1 robots → 0% éxito
 
-Analizando: 5 robots, 25 mangos
-  [1/5] ✓ Éxito (0.91s)
-  [2/5] ✓ Éxito (0.89s)
-  ...
-Resultado: 5 robots → 100% éxito
+Analizando: 2 robots, 6 mangos
+  [1/2] ✗ Fallo: 4/6 etiquetados (0.03s)
+  [2/2] ✗ Fallo: 3/6 etiquetados (0.03s)
+Resultado: 2 robots → 0% éxito
 
-✓ Número óptimo encontrado: 5 robots
+Analizando: 3 robots, 6 mangos
+  [1/2] ✓ Éxito (0.03s)
+  [2/2] ✓ Éxito (0.02s)
+Resultado: 3 robots → 100% éxito
+
+✓ Número óptimo encontrado: 3 robots
 ```
+
+**Nota:** El análisis usa una banda de 300cm (más larga que el simulador) para dar más tiempo de procesamiento y obtener resultados más robustos.
 
 ### Ejemplo 3: Generar Curva Completa
 
 ```bash
-./mango_analysis 2 10 40 5 3
+./mango_analysis 2 4 12 2 2
 ```
 
-Genera una curva desde 10 hasta 40 mangos (incremento de 5) con 3 simulaciones por configuración.
+Genera una curva desde 4 hasta 12 mangos (incremento de 2) con 2 simulaciones por configuración.
+
+**Salida**:
+```
+=== GENERANDO CURVA ROBOTS VS MANGOS ===
+Rango de mangos: 4 - 12 (incremento: 2)
+Tasa de éxito objetivo: 95%
+Simulaciones por configuración: 2
+
+Procesando: 4 mangos...
+Procesando: 6 mangos...
+Procesando: 8 mangos...
+Procesando: 10 mangos...
+Procesando: 12 mangos...
+
+✓ Curva generada exitosamente
+```
 
 **Archivo generado** (`curva_robots_mangos.csv`):
 ```csv
 NumMangos,RobotsMínimos,TasaÉxito,TiempoPromedio
-10,2,1.000,0.425
-15,3,0.967,0.612
-20,4,0.967,0.798
-25,5,1.000,0.981
-30,6,0.967,1.154
-35,7,1.000,1.328
-40,8,0.967,1.512
+4,2,1.000,0.015
+6,3,1.000,0.025
+8,3,1.000,0.032
+10,4,1.000,0.041
+12,4,1.000,0.048
 ```
+
+Si tienes gnuplot instalado, se generará automáticamente un gráfico mostrando la curva.
 
 ### Ejemplo 4: Análisis con Redundancia
 
 ```bash
-./mango_analysis 3 25 5 0.1 5
+./mango_analysis 3 12 4 0.1 2
 ```
 
-Analiza el sistema con 25 mangos, 5 robots base, 10% de probabilidad de fallo, y 5 simulaciones.
+Analiza el sistema con 12 mangos, 4 robots base, 10% de probabilidad de fallo, y 2 simulaciones.
 
 **Salida**:
 ```
 === ANÁLISIS CON REDUNDANCIA ===
 Probabilidad de fallo: 10.00%
 
-Analizando: 5 robots, 25 mangos, prob_fallo=0.10
+Analizando: 4 robots, 12 mangos, prob_fallo=0.10
   [SISTEMA] Robot 2 ha fallado!
-  [1/5] ✗ Fallo: 22/25 etiquetados (0.94s)
-  ...
-Resultado: 5 robots → 40% éxito
+  [1/2] ✗ Fallo: 9/12 etiquetados (0.04s)
+  [2/2] ✓ Éxito (0.03s)
+Resultado: 4 robots → 50% éxito
 
-Analizando: 6 robots, 25 mangos, prob_fallo=0.10
+Analizando: 5 robots, 12 mangos, prob_fallo=0.10
   [SISTEMA] Robot 1 ha fallado!
-  [1/5] ✓ Éxito (1.02s)
-  ...
-Resultado: 6 robots → 80% éxito
+  [1/2] ✓ Éxito (0.04s)
+  [2/2] ✓ Éxito (0.03s)
+Resultado: 5 robots → 100% éxito
 
-Analizando: 7 robots, 25 mangos, prob_fallo=0.10
-  [SISTEMA] Robot 3 ha fallado!
-  [1/5] ✓ Éxito (1.08s)
-  ...
-Resultado: 7 robots → 100% éxito
+✓ Redundancia adecuada con 5 robots (100% éxito con fallo 10%)
+```
 
-✓ Redundancia adecuada con 7 robots (100% éxito con fallo 10%)
+**Archivo generado** (`analisis_redundancia.csv`):
+```csv
+NumRobots,NumMangos,ProbFallo,TasaÉxito,TiempoPromedio
+4,12,0.10,0.500,0.035
+5,12,0.10,1.000,0.035
 ```
 
 ### Ejemplo 5: Prueba con Banda Rápida
 
 ```bash
-./mango_simulator 20 50 200 8 25
+./mango_simulator 20 50 300 10 20
 ```
 
-Banda rápida (20 cm/s) requiere más robots para el mismo número de mangos.
+Banda rápida (20 cm/s) requiere más robots para el mismo número de mangos. Esta configuración usa una banda más larga (300cm) para compensar la velocidad.
+
+### Ejemplo 6: Prueba con Caja Grande
+
+```bash
+./mango_simulator 10 80 300 6 30
+```
+
+Caja grande (80cm × 80cm) con 30 mangos requiere más robots debido al área mayor.
 
 ---
 
@@ -278,15 +334,25 @@ Banda rápida (20 cm/s) requiere más robots para el mismo número de mangos.
 
 ## 🎯 Comandos del Makefile
 
+### Compilación
 ```bash
-make all          # Compilar todo
-make clean        # Limpiar archivos compilados
+make all          # Compilar todos los programas
+make clean        # Limpiar archivos compilados y CSV
 make clean-ipc    # Limpiar recursos IPC del sistema
-make test         # Prueba rápida
-make test-all     # Múltiples pruebas
-make analysis     # Generar curva de optimización
-make redundancy   # Análisis con redundancia
-make help         # Ver ayuda
+```
+
+### Pruebas
+```bash
+make test            # Prueba rápida del simulador (4 robots, 6 mangos)
+make test-analysis   # Prueba búsqueda de robots óptimos (6 mangos)
+make test-curve      # Prueba generación de curva (4-8 mangos)
+make test-redundancy # Prueba análisis con redundancia (8 mangos, 10% fallo)
+make test-all        # Ejecutar todas las pruebas anteriores
+```
+
+### Ayuda
+```bash
+make help         # Mostrar ayuda completa
 ```
 
 ---
@@ -355,6 +421,7 @@ ulimit -n 4096
 **Solución**:
 - Reducir número de mangos o robots
 - Disminuir número de simulaciones en análisis
+- Aumentar longitud de banda para dar más tiempo a los robots
 - Compilar con optimización: agregar `-O3` en CFLAGS del Makefile
 
 ### Problema: Resultados no determinísticos
@@ -364,6 +431,25 @@ ulimit -n 4096
 **Solución**:
 - Aumentar número de simulaciones (parámetro en `mango_analysis`)
 - Usar seed fijo en `srand()` para reproducibilidad (debugging)
+
+### Problema: Muchos mangos no son etiquetados
+
+**Causa**: Configuración insuficiente (pocos robots, banda muy rápida, o banda muy corta)
+
+**Solución**:
+- Aumentar número de robots
+- Reducir velocidad de la banda
+- Aumentar longitud de la banda (más espacio = más tiempo)
+- Usar `./mango_analysis 1 <num_mangos> <sims>` para encontrar el número óptimo
+
+### Problema: Gnuplot no muestra gráficos
+
+**Causa**: Gnuplot no instalado
+
+**Solución**:
+```bash
+sudo apt install gnuplot
+```
 
 ---
 
@@ -414,20 +500,31 @@ Para determinar el punto óptimo de operación:
 
 ## 📈 Rendimiento
 
-### Benchmarks Típicos (Intel i5, 8GB RAM)
+### Benchmarks Típicos (Banda 200cm, velocidad 10cm/s)
 
-| Mangos | Robots | Tiempo Simulación |
-|--------|--------|-------------------|
-| 10 | 2 | ~0.4s |
-| 20 | 4 | ~0.8s |
-| 30 | 6 | ~1.2s |
-| 40 | 8 | ~1.5s |
+| Mangos | Robots | Tiempo Simulación | Tasa Éxito |
+|--------|--------|-------------------|------------|
+| 4 | 2 | ~0.02s | 100% |
+| 6 | 3 | ~0.03s | 100% |
+| 8 | 4 | ~0.03s | 100% |
+| 10 | 4 | ~0.04s | 95%+ |
+| 12 | 5 | ~0.05s | 95%+ |
 
 ### Escalabilidad
 
 - **Lineal con número de mangos**: O(N)
 - **Sublineal con número de robots**: Speedup hasta R ≈ N/2
 - **Overhead de IPC**: < 5% del tiempo total
+- **Memoria compartida**: ~4KB por simulación
+- **Procesos concurrentes**: Limitado por número de CPUs disponibles
+
+### Factores que Afectan el Rendimiento
+
+1. **Velocidad de banda**: Más rápida = menos tiempo disponible = más robots necesarios
+2. **Longitud de banda**: Más larga = más espacio = más tiempo para etiquetar
+3. **Tamaño de caja**: Cajas grandes requieren más tiempo de etiquetado por mango
+4. **Distancia de mangos**: Mangos más alejados del centro requieren más tiempo
+5. **Número de robots**: Más robots = mejor paralelización hasta cierto punto
 
 ---
 
