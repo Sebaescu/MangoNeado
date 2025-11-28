@@ -1,9 +1,9 @@
 #include "mango_system.h"
 
-#define NUM_SIMULACIONES 10  // Número de simulaciones por configuración
-#define MAX_INTENTOS_ROBOT 15 // Máximo número de robots a probar
+#define NUM_SIMULACIONES 10
+#define MAX_INTENTOS_ROBOT 15
 
-// Estructura para resultados de análisis
+// Para guardar los resultados
 typedef struct {
     int num_robots;
     int num_mangos;
@@ -13,7 +13,7 @@ typedef struct {
     int fallos;
 } ResultadoAnalisis;
 
-// Función para realizar múltiples simulaciones y calcular estadísticas
+// Corre varias simulaciones y calcula el promedio
 ResultadoAnalisis analizar_configuracion(ConfiguracionSistema *config, 
                                          int num_simulaciones) {
     ResultadoAnalisis resultado;
@@ -51,7 +51,7 @@ ResultadoAnalisis analizar_configuracion(ConfiguracionSistema *config,
                    config->num_mangos, tiempo_sim);
         }
         
-        // Pequeña pausa entre simulaciones para asegurar limpieza
+        // Esperar un poco entre simulaciones
         usleep(100000);
     }
     
@@ -61,7 +61,7 @@ ResultadoAnalisis analizar_configuracion(ConfiguracionSistema *config,
     return resultado;
 }
 
-// Encontrar el número mínimo de robots para una tasa de éxito objetivo
+// Busca cuantos robots se necesitan como minimo
 int encontrar_num_robots_optimo(ConfiguracionSistema *config, 
                                 float tasa_exito_objetivo,
                                 int num_simulaciones) {
@@ -69,7 +69,7 @@ int encontrar_num_robots_optimo(ConfiguracionSistema *config,
     printf("Objetivo: %.0f%% tasa de éxito\n", tasa_exito_objetivo * 100);
     printf("Mangos: %d\n", config->num_mangos);
     
-    // Búsqueda lineal comenzando con pocos robots
+    // Probar desde 1 robot hasta encontrar el numero optimo
     for (int num_robots = 1; num_robots <= MAX_INTENTOS_ROBOT; num_robots++) {
         config->num_robots = num_robots;
         
@@ -90,7 +90,7 @@ int encontrar_num_robots_optimo(ConfiguracionSistema *config,
     return -1;
 }
 
-// Generar curva de robots vs mangos
+// Genera el CSV con la curva
 void generar_curva_robots_mangos(ConfiguracionSistema *config_base, 
                                  int num_mangos_min, 
                                  int num_mangos_max,
@@ -102,7 +102,7 @@ void generar_curva_robots_mangos(ConfiguracionSistema *config_base,
            num_mangos_min, num_mangos_max, incremento_mangos);
     printf("Tasa de éxito objetivo: %.0f%%\n\n", tasa_exito_objetivo * 100);
     
-    // Abrir archivo para guardar resultados
+    // Crear el archivo CSV
     FILE *archivo = fopen("curva_robots_mangos.csv", "w");
     if (archivo == NULL) {
         perror("Error abriendo archivo");
@@ -141,7 +141,7 @@ void generar_curva_robots_mangos(ConfiguracionSistema *config_base,
     fclose(archivo);
     printf("\nResultados guardados en: curva_robots_mangos.csv\n");
     
-    // Generar gráfica con gnuplot
+    // Graficar con gnuplot si esta instalado
     printf("Generando gráfica...\n");
     FILE *gnuplot = popen("gnuplot -persist", "w");
     if (gnuplot != NULL) {
@@ -160,7 +160,7 @@ void generar_curva_robots_mangos(ConfiguracionSistema *config_base,
     }
 }
 
-// Análisis con redundancia (probabilidad de fallo)
+// Analiza el sistema con fallas de robots
 void analizar_con_redundancia(ConfiguracionSistema *config_base,
                               float prob_fallo,
                               int num_simulaciones) {
@@ -171,7 +171,7 @@ void analizar_con_redundancia(ConfiguracionSistema *config_base,
     config.prob_fallo = prob_fallo;
     config.usar_redundancia = 1;
     
-    // Abrir archivo para resultados
+    // Crear CSV de resultados
     FILE *archivo = fopen("analisis_redundancia.csv", "w");
     if (archivo == NULL) {
         perror("Error abriendo archivo");
@@ -183,7 +183,7 @@ void analizar_con_redundancia(ConfiguracionSistema *config_base,
     printf("\nRobots | Tasa Éxito | Tiempo\n");
     printf("-------|------------|--------\n");
     
-    // Probar diferentes números de robots con redundancia
+    // Probar con mas robots hasta que funcione bien
     for (int r = config_base->num_robots; 
          r <= config_base->num_robots + 5; r++) {
         config.num_robots = r;
@@ -197,7 +197,7 @@ void analizar_con_redundancia(ConfiguracionSistema *config_base,
         fprintf(archivo, "%d,%.3f,%.3f\n", 
                 r, resultado.tasa_exito, resultado.tiempo_promedio);
         
-        // Si alcanzamos alta tasa de éxito, podemos parar
+        // Si ya alcanzamos buen resultado, parar
         if (resultado.tasa_exito >= 0.95) {
             printf("\n✓ Redundancia adecuada con %d robots "
                    "(%.0f%% éxito con fallo %.0f%%)\n", 
@@ -213,11 +213,11 @@ void analizar_con_redundancia(ConfiguracionSistema *config_base,
 int main(int argc, char *argv[]) {
     srand(time(NULL));
     
-    // Configuración base del sistema (más generosa para análisis)
+    // Config por defecto
     ConfiguracionSistema config_base;
-    config_base.velocidad_banda = 10.0;   // 10 cm/s
-    config_base.tamano_caja = 50.0;       // 50 cm
-    config_base.longitud_banda = 300.0;   // 300 cm (más espacio para robots)
+    config_base.velocidad_banda = 10.0;
+    config_base.tamano_caja = 50.0;
+    config_base.longitud_banda = 300.0;  // banda mas larga para dar mas tiempo
     config_base.prob_fallo = 0.0;
     config_base.usar_redundancia = 0;
     
@@ -238,7 +238,7 @@ int main(int argc, char *argv[]) {
     
     switch (modo) {
         case 1: {
-            // Análisis simple
+            // Buscar robots optimos
             int num_mangos = (argc >= 3) ? atoi(argv[2]) : 20;
             int num_sims = (argc >= 4) ? atoi(argv[3]) : 5;
             
@@ -248,7 +248,7 @@ int main(int argc, char *argv[]) {
         }
         
         case 2: {
-            // Generar curva
+            // Hacer la curva
             int min_mangos = (argc >= 3) ? atoi(argv[2]) : 10;
             int max_mangos = (argc >= 4) ? atoi(argv[3]) : 30;
             int incremento = (argc >= 5) ? atoi(argv[4]) : 5;
@@ -260,7 +260,7 @@ int main(int argc, char *argv[]) {
         }
         
         case 3: {
-            // Análisis con redundancia
+            // Probar con fallas
             int num_mangos = (argc >= 3) ? atoi(argv[2]) : 20;
             int robots_base = (argc >= 4) ? atoi(argv[3]) : 5;
             float prob_fallo = (argc >= 5) ? atof(argv[4]) : 0.05;

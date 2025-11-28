@@ -16,53 +16,53 @@
 #include <math.h>
 #include <sys/types.h>
 
-// Constantes del sistema
+// Limites del sistema
 #define MAX_MANGOS 50
 #define MAX_ROBOTS 20
 #define SHM_NAME "/mango_system_shm"
 #define SEM_MUTEX_NAME "/mango_mutex"
 #define SEM_ROBOT_NAME "/mango_robot_"
 
-// Estructura para representar un mango
+// Info de cada mango
 typedef struct {
-    float x;              // Coordenada X relativa al centroide (cm)
-    float y;              // Coordenada Y relativa al centroide (cm)
-    int etiquetado;       // 0 = no etiquetado, 1 = etiquetado
-    int robot_asignado;   // ID del robot asignado (-1 si ninguno)
-    float tiempo_etiquetado; // Tiempo en que fue etiquetado
+    float x;
+    float y;
+    int etiquetado;       // 0 o 1
+    int robot_asignado;   // cual robot lo agarro
+    float tiempo_etiquetado;
 } Mango;
 
-// Estado compartido del sistema
+// Estado del sistema compartido
 typedef struct {
-    int num_mangos;                    // Número de mangos en la caja actual
-    Mango mangos[MAX_MANGOS];          // Array de mangos
-    float posicion_caja;               // Posición actual de la caja en la banda (cm)
-    int robots_activos;                // Número de robots actualmente activos
-    int robots_disponibles[MAX_ROBOTS]; // 1 = disponible, 0 = no disponible
-    int robots_fallados[MAX_ROBOTS];   // 1 = fallado, 0 = operativo
-    int caja_completada;               // 1 = todos los mangos etiquetados
-    int simulacion_activa;             // 1 = simulación en curso
-    float posiciones_robot[MAX_ROBOTS]; // Posición de cada robot en la banda
+    int num_mangos;
+    Mango mangos[MAX_MANGOS];
+    float posicion_caja;
+    int robots_activos;
+    int robots_disponibles[MAX_ROBOTS];
+    int robots_fallados[MAX_ROBOTS];
+    int caja_completada;
+    int simulacion_activa;
+    float posiciones_robot[MAX_ROBOTS];
     
-    // Parámetros de operación
-    float velocidad_banda;  // X cm/s
-    float tamano_caja;      // Z cm (lado del cuadrado)
-    float longitud_banda;   // W cm
-    int num_robots_totales; // Número total de robots instalados
+    // Parametros
+    float velocidad_banda;
+    float tamano_caja;
+    float longitud_banda;
+    int num_robots_totales;
 } EstadoSistema;
 
-// Parámetros de configuración
+// Configuracion para simular
 typedef struct {
-    float velocidad_banda;     // X cm/s
-    float tamano_caja;         // Z cm
-    float longitud_banda;      // W cm
-    int num_robots;            // Número de robots
-    int num_mangos;            // Número de mangos en la caja
-    float prob_fallo;          // Probabilidad de fallo (0-1)
-    int usar_redundancia;      // 1 = activar redundancia
+    float velocidad_banda;
+    float tamano_caja;
+    float longitud_banda;
+    int num_robots;
+    int num_mangos;
+    float prob_fallo;          // 0 a 1
+    int usar_redundancia;      // 0 o 1
 } ConfiguracionSistema;
 
-// Funciones principales
+// Funciones
 void inicializar_sistema(EstadoSistema *estado, ConfiguracionSistema *config);
 void generar_mangos(EstadoSistema *estado, int num_mangos, float tamano_caja);
 void proceso_robot(int robot_id, EstadoSistema *estado, sem_t *mutex, 
@@ -72,7 +72,7 @@ void calcular_posiciones_robots(EstadoSistema *estado, float longitud_banda,
                                 int num_robots);
 float calcular_tiempo_etiquetado(Mango *mango, float tamano_caja);
 
-// Funciones de utilidad
+// Otras funciones
 void imprimir_estado(EstadoSistema *estado);
 void cleanup_recursos();
 void signal_handler(int signo);

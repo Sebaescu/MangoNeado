@@ -1,11 +1,11 @@
 #include "mango_system.h"
 
-// Variables globales para cleanup
+// Variables para limpiar al final
 static int shm_fd = -1;
 static sem_t *sem_mutex = NULL;
 static EstadoSistema *estado_compartido = NULL;
 
-// Manejador de señales para limpieza
+// Para manejar Ctrl+C
 void signal_handler(int signo) {
     (void)signo;
     if (estado_compartido != NULL) {
@@ -15,7 +15,7 @@ void signal_handler(int signo) {
     exit(0);
 }
 
-// Limpieza de recursos
+// Limpia la memoria compartida y semaforos
 void cleanup_recursos() {
     if (estado_compartido != NULL) {
         munmap(estado_compartido, sizeof(EstadoSistema));
@@ -33,7 +33,7 @@ void cleanup_recursos() {
     }
 }
 
-// Inicializar el sistema
+// Pone todo en 0 al inicio
 void inicializar_sistema(EstadoSistema *estado, ConfiguracionSistema *config) {
     memset(estado, 0, sizeof(EstadoSistema));
     
@@ -54,7 +54,7 @@ void inicializar_sistema(EstadoSistema *estado, ConfiguracionSistema *config) {
     calcular_posiciones_robots(estado, config->longitud_banda, config->num_robots);
 }
 
-// Calcular posiciones equidistantes de robots
+// Calcula donde va cada robot en la banda
 void calcular_posiciones_robots(EstadoSistema *estado, float longitud_banda, 
                                 int num_robots) {
     if (num_robots <= 0) return;
@@ -65,15 +65,13 @@ void calcular_posiciones_robots(EstadoSistema *estado, float longitud_banda,
     }
 }
 
-// Generar mangos aleatorios en la caja
+// Genera mangos random en la caja
 void generar_mangos(EstadoSistema *estado, int num_mangos, float tamano_caja) {
     estado->num_mangos = num_mangos;
     
-    // Limitar la distancia de los mangos para que sean alcanzables
-    // Usamos un límite conservador para asegurar que todos los mangos
-    // puedan ser etiquetados con alta probabilidad
-    (void)tamano_caja;  // Suprimir warning de parámetro no usado
-    float limite = 7.0;  // Reducido para mayor confiabilidad
+    // No poner los mangos muy lejos para que se puedan alcanzar
+    (void)tamano_caja;
+    float limite = 7.0;  // 7cm max para que funcione bien
     
     for (int i = 0; i < num_mangos; i++) {
         estado->mangos[i].x = ((float)rand() / RAND_MAX) * 2.0 * limite - limite;
@@ -84,14 +82,14 @@ void generar_mangos(EstadoSistema *estado, int num_mangos, float tamano_caja) {
     }
 }
 
-// Calcular tiempo necesario para etiquetar un mango
+// Calcula cuanto tarda en etiquetar un mango
 float calcular_tiempo_etiquetado(Mango *mango, float tamano_caja) {
     float distancia = sqrt(mango->x * mango->x + mango->y * mango->y);
     float velocidad_robot = tamano_caja / 10.0;
     return (2.0 * distancia) / velocidad_robot;
 }
 
-// Proceso de robot individual
+// Lo que hace cada robot
 void proceso_robot(int robot_id, EstadoSistema *estado, sem_t *mutex, 
                    ConfiguracionSistema *config) {
     float pos_robot = estado->posiciones_robot[robot_id];
@@ -109,14 +107,14 @@ void proceso_robot(int robot_id, EstadoSistema *estado, sem_t *mutex,
         
         float pos_caja = estado->posicion_caja;
         
-        // Mientras la caja esté en la zona del robot, buscar mangos
+        // Si la caja esta en mi zona, buscar mangos
         if (pos_caja >= inicio_zona && pos_caja <= fin_zona) {
             sem_wait(mutex);
             
             int mango_etiquetado_ahora = 0;
             float tiempo_actual = pos_caja / config->velocidad_banda;
             
-            // Buscar un mango disponible
+            // Buscar un mango que no este etiquetado
             for (int i = 0; i < estado->num_mangos; i++) {
                 if (!estado->mangos[i].etiquetado && 
                     estado->mangos[i].robot_asignado == -1) {
@@ -144,25 +142,25 @@ void proceso_robot(int robot_id, EstadoSistema *estado, sem_t *mutex,
                                robot_id, i, estado->mangos[i].x, 
                                estado->mangos[i].y, tiempo_etiquetado);
                         
-                        break;  // Salir del for y buscar otro mango
+                        break;  // Ya etiquete uno, buscar otro
                     }
                 }
             }
             
-            // Liberar mutex solo si no etiquetamos (si etiquetamos, ya lo liberamos en el wait después del sleep)
+            // Soltar el mutex
             if (mango_etiquetado_ahora) {
-                sem_post(mutex);  // Liberar el mutex que adquirimos después del sleep
+                sem_post(mutex);
             } else {
-                sem_post(mutex);  // Liberar el mutex inicial
-                // No hay mangos disponibles, esperar un poco
+                sem_post(mutex);
+                // No hay mangos, esperar
                 usleep(10000);
             }
         } else {
-            // La caja no está en nuestra zona, esperar
+            // La caja no esta en mi zona
             usleep(10000);
         }
         
-        // Verificar si ya terminamos (todos los mangos etiquetados)
+        // Ver si ya terminamos
         if (pos_caja > fin_zona) {
             sem_wait(mutex);
             int todos_etiquetados = 1;
@@ -180,13 +178,13 @@ void proceso_robot(int robot_id, EstadoSistema *estado, sem_t *mutex,
             sem_post(mutex);
         }
         
-        usleep(1000);  // Reducir sleep para mayor responsividad
+        usleep(1000);  // Dormir un poco
     }
     
     printf("[Robot %d] Finalizando operación\n", robot_id);
 }
 
-// Simular una corrida completa
+// Corre toda la simulacion
 int simular_etiquetado(ConfiguracionSistema *config, int *mangos_etiquetados) {
     pid_t pids[MAX_ROBOTS];
     int num_procesos = 0;
@@ -218,7 +216,7 @@ int simular_etiquetado(ConfiguracionSistema *config, int *mangos_etiquetados) {
     inicializar_sistema(estado_compartido, config);
     generar_mangos(estado_compartido, config->num_mangos, config->tamano_caja);
     
-    // Crear procesos robot
+    // Crear los procesos de los robots
     for (int i = 0; i < config->num_robots; i++) {
         pid_t pid = fork();
         if (pid == 0) {
@@ -232,7 +230,7 @@ int simular_etiquetado(ConfiguracionSistema *config, int *mangos_etiquetados) {
         }
     }
     
-    // Proceso principal: mover la banda
+    // Mover la banda
     float tiempo_total = (config->longitud_banda + config->tamano_caja) / 
                          config->velocidad_banda;
     float dt = 0.05;

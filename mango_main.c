@@ -8,7 +8,7 @@ int main(int argc, char *argv[]) {
     
     ConfiguracionSistema config;
     
-    // Configuración por defecto o desde argumentos
+    // Leer parametros o usar defaults
     if (argc >= 5) {
         config.velocidad_banda = atof(argv[1]);
         config.tamano_caja = atof(argv[2]);
@@ -18,10 +18,10 @@ int main(int argc, char *argv[]) {
         config.prob_fallo = (argc >= 7) ? atof(argv[6]) : 0.0;
         config.usar_redundancia = (argc >= 8) ? atoi(argv[7]) : 0;
     } else {
-        // Valores por defecto para prueba
-        config.velocidad_banda = 10.0;  // 10 cm/s
-        config.tamano_caja = 50.0;      // 50 cm
-        config.longitud_banda = 200.0;  // 200 cm
+        // Si no pasan parametros usar estos
+        config.velocidad_banda = 10.0;
+        config.tamano_caja = 50.0;
+        config.longitud_banda = 200.0;
         config.num_robots = 5;
         config.num_mangos = 20;
         config.prob_fallo = 0.0;
