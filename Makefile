@@ -1,6 +1,6 @@
 CC = gcc
-CFLAGS = -Wall -Wextra -std=c11 -D_POSIX_C_SOURCE=200809L -O2
-LDFLAGS = -lrt -lpthread -lm
+CFLAGS = -Wall -Wextra -std=c11 -O2
+LDFLAGS = -lpthread -lm
 
 CORE_SRC = mango_core.c
 MAIN_SRC = mango_main.c

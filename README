@@ -42,9 +42,11 @@ Este proyecto simula un sistema de producción donde:
 ## 🔧 Requisitos
 
 ### Sistema Operativo
-- Linux (Ubuntu, Debian, Fedora, etc.)
-- macOS (con algunas limitaciones en IPC)
-- WSL2 en Windows
+- **Linux** (Ubuntu, Debian, Fedora, etc.)
+- **macOS** (con algunas limitaciones en IPC)
+- **Windows** mediante WSL2 (Windows Subsystem for Linux)
+
+> ⚠️ **IMPORTANTE PARA WINDOWS**: Este proyecto usa características POSIX (memoria compartida, semáforos, fork) que **NO están disponibles en Windows nativo** (ni con MSYS2/MinGW). **Debes usar WSL2**.
 
 ### Herramientas
 ```bash
@@ -55,32 +57,83 @@ libpthread (incluida en glibc)
 libm (biblioteca matemática)
 ```
 
-### Instalación de dependencias (Ubuntu/Debian)
+---
+
+## 🚀 Instalación
+
+### 🪟 Instalación en Windows (WSL2)
+
+#### Paso 1: Instalar WSL2
+
+1. Abrir PowerShell como **Administrador** y ejecutar:
+```powershell
+wsl --install
+```
+
+2. Reiniciar el computador cuando se solicite
+
+3. Al reiniciar, se abrirá automáticamente Ubuntu. Crear usuario y contraseña cuando se pida
+
+4. Si no se abre automáticamente, buscar "Ubuntu" en el menú inicio
+
+#### Paso 2: Instalar herramientas de compilación en WSL
+
+Dentro de la terminal WSL (Ubuntu), ejecutar:
+```bash
+sudo apt update
+sudo apt install build-essential
+```
+
+#### Paso 3: Navegar al proyecto
+
+Tu disco C:\ está montado en `/mnt/c/` en WSL. Navegar así:
+```bash
+cd /mnt/c/Users/TU_USUARIO/Documents/github/MangoNeado
+```
+
+Ejemplo:
+```bash
+cd /mnt/c/Users/thepi/Documents/github/MangoNeado
+```
+
+#### Paso 4: Compilar el proyecto
+
+```bash
+make all
+```
+
+Si la compilación es exitosa, verás:
+```
+✓ Funciones core compiladas
+✓ Programa principal compilado: mango_simulator
+✓ Programa de análisis compilado: mango_analysis
+```
+
+#### Paso 5: Ejecutar
+
+```bash
+./mango_simulator 10 50 200 4 6
+```
+
+---
+
+### 🐧 Instalación en Linux
+
+#### Paso 1: Instalar dependencias (Ubuntu/Debian)
 ```bash
 sudo apt-get update
 sudo apt-get install build-essential
 ```
 
----
-
-## 🚀 Instalación
-
-### Paso 1: Clonar o copiar archivos
-
-Asegúrate de tener los siguientes archivos:
-```
-proyecto/
-├── mango_system.h          # Header con estructuras y declaraciones
-├── mango_main.c            # Programa principal de simulación
-├── mango_analysis.c        # Programa de análisis y optimización
-├── Makefile                # Script de compilación
-└── README.md               # Este archivo
+Para Fedora/RHEL:
+```bash
+sudo dnf groupinstall "Development Tools"
 ```
 
-### Paso 2: Compilar
+#### Paso 2: Compilar
 
 ```bash
-cd proyecto/
+cd MangoNeado/
 make all
 ```
 
@@ -90,10 +143,10 @@ Si la compilación es exitosa, verás:
 ✓ Programa de análisis compilado: mango_analysis
 ```
 
-### Paso 3: Verificar
+#### Paso 3: Verificar
 
 ```bash
-./mango_simulator --help
+./mango_simulator 10 50 200 4 6
 ```
 
 ---

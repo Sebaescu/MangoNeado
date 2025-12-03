@@ -278,7 +278,9 @@ int simular_etiquetado(ConfiguracionSistema *config, int *mangos_etiquetados) {
     printf("\n=== SIMULACIÓN COMPLETADA ===\n");
     printf("Mangos etiquetados: %d / %d\n", *mangos_etiquetados, config->num_mangos);
     
-    int exito = (*mangos_etiquetados == config->num_mangos) ? 1 : 0;
+    // Calcular porcentaje de éxito (90% o más se considera éxito)
+    float porcentaje_etiquetado = (float)(*mangos_etiquetados) / config->num_mangos;
+    int exito = (porcentaje_etiquetado >= 0.90) ? 1 : 0;
     
     cleanup_recursos();
     return exito;
